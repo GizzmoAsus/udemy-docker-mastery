@@ -16,15 +16,42 @@
 
 # Instructions from the app developer
 # - you should use the 'node' official image, with the alpine 6.x branch
+FROM node:6.16.0-alpine
+
+
+# set our node environment, either development or production
+# defaults to production, compose overrides this to development on build and run
+ARG NODE_ENV=production
+ENV NODE_ENV $NODE_ENV
+
 # - this app listens on port 3000, but the container should launch on port 80
   #  so it will respond to http://localhost:80 on your computer
+EXPOSE 3000
+
 # - then it should use alpine package manager to install tini: 'apk add --update tini'
+RUN apk add --update tini
+
 # - then it should create directory /usr/src/app for app files with 'mkdir -p /usr/src/app'
+ARG SRC=/usr/src/app/
+RUN mkdir -p $SRC
+
 # - Node uses a "package manager", so it needs to copy in package.json file
+WORKDIR $SRC
+COPY package.json package.json
+
 # - then it needs to run 'npm install' to install dependencies from that file
 # - to keep it clean and small, run 'npm cache clean --force' after above
+RUN npm install --no-optional && npm cache clean --force
+
 # - then it needs to copy in all files from current directory
+COPY . $SRC
+
+# secure the running user to node
+USER node
+
 # - then it needs to start container with command '/sbin/tini -- node ./bin/www'
+CMD /sbin/tini -- node ./bin/www
+
 # - in the end you should be using FROM, RUN, WORKDIR, COPY, EXPOSE, and CMD commands
 
 # Bonus Extra Credit
